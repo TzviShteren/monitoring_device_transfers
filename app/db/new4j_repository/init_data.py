@@ -4,7 +4,7 @@ from operator import itemgetter
 from datetime import datetime, timedelta
 import uuid
 from app.db.database import driver
-from app.db.new4j_repository.generic import read_generic, pip_return, for_single
+from app.db.model import Location, Device, Interacts
 
 
 def device_exist(device_id):
@@ -74,9 +74,9 @@ def create_interaction_details(interaction):
         session.run(query, params)
 
 
-def process_devices_and_interaction(device_1, device_2, interaction):
+def process_devices_and_interaction(device_1: Device, device_2: Device, interaction: Interacts, location_1: Location,
+                                    location_2: Location):
     with driver.session() as session:
-        # Create device query
         query_create_device = """
             MERGE (d1:Device {device_id: $id1})
             ON CREATE SET 
@@ -98,56 +98,48 @@ def process_devices_and_interaction(device_1, device_2, interaction):
                 d2.altitude_meters = $altitude_meters2,
                 d2.accuracy_meters = $accuracy_meters2
         """
-
-        # Create interaction query
         query_create_interaction = """
-            MATCH (from:Device {device_id: $from_device})
-            MATCH (to:Device {device_id: $to_device})
-            CREATE (from)-[r:INTERACTS_WITH {
+            WITH d1, d2
+            WHERE EXISTS((d1)-[:INTERACTS_WITH]->(d2)) = false AND d1.device_id IS NOT NULL AND d2.device_id IS NOT NULL
+            CREATE (d1)-[r:INTERACTS_WITH {
+                from_device: $from_device,
+                to_device: $to_device,
                 method: $method,
                 bluetooth_version: $bluetooth_version,
                 signal_strength_dbm: $signal_strength_dbm,
                 distance_meters: $distance_meters,
                 duration_seconds: $duration_seconds,
                 timestamp: datetime($timestamp)
-            }]->(to)
+            }]->(d2)
         """
 
-        # Check and create device_1
-        if not session.run(query_check_device, {'id': device_1['id']}).single()['exists']:
-            session.run(query_create_device, {
-                "id": device_1["id"],
-                "brand": device_1["brand"],
-                "model": device_1["model"],
-                "os": device_1["os"],
-                "latitude": device_1["location"]["latitude"],
-                "longitude": device_1["location"]["longitude"],
-                "altitude_meters": device_1["location"]["altitude_meters"],
-                "accuracy_meters": device_1["location"]["accuracy_meters"]
-            })
-            print()
+        params = {
+            "id1": device_1.id,
+            "brand1": device_1.brand,
+            "model1": device_1.model,
+            "os1": device_1.os,
+            "latitude1": location_1.latitude,
+            "longitude1": location_1.longitude,
+            "altitude_meters1": location_1.altitude_meters,
+            "accuracy_meters1": location_1.accuracy_meters,
 
-        # Check and create device_2
-        if not session.run(query_check_device, {'id': device_2['id']}).single()['exists']:
-            session.run(query_create_device, {
-                "id": device_2["id"],
-                "brand": device_2["brand"],
-                "model": device_2["model"],
-                "os": device_2["os"],
-                "latitude": device_2["location"]["latitude"],
-                "longitude": device_2["location"]["longitude"],
-                "altitude_meters": device_2["location"]["altitude_meters"],
-                "accuracy_meters": device_2["location"]["accuracy_meters"]
-            })
+            "id2": device_2.id,
+            "brand2": device_2.brand,
+            "model2": device_2.model,
+            "os2": device_2.os,
+            "latitude2": location_2.latitude,
+            "longitude2": location_2.longitude,
+            "altitude_meters2": location_2.altitude_meters,
+            "accuracy_meters2": location_2.accuracy_meters,
 
-        # Create the interaction
-        session.run(query_create_interaction, {
-            "from_device": interaction["from_device"],
-            "to_device": interaction["to_device"],
-            "method": interaction["method"],
-            "bluetooth_version": interaction["bluetooth_version"],
-            "signal_strength_dbm": interaction["signal_strength_dbm"],
-            "distance_meters": interaction["distance_meters"],
-            "duration_seconds": interaction["duration_seconds"],
-            "timestamp": interaction["timestamp"]
-        })
+            "from_device": interaction.from_device,
+            "to_device": interaction.to_device,
+            "method": interaction.method,
+            "bluetooth_version": interaction.bluetooth_version,
+            "signal_strength_dbm": interaction.signal_strength_dbm,
+            "distance_meters": interaction.distance_meters,
+            "duration_seconds": interaction.duration_seconds,
+            "timestamp": interaction.timestamp
+        }
+        query = query_create_device + query_create_interaction
+        session.run(query, params)
