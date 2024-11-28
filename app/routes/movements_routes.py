@@ -23,7 +23,7 @@ def how_many_called_the_device():
     if device_id is None:
         return jsonify({'error': 'No device id'}), 400
 
-    res = ()
+    res = how_many_called_the_device_by_id(device_id)
 
     return jsonify(res), 200
 
@@ -44,3 +44,13 @@ def check_direct_connection():
         "direct_connection": is_connected
     }), 200
 
+
+@connected_blueprint.route('/most_recent_interaction', methods=['GET'])
+def most_recent_interaction():
+    device_id = request.args.get('device_id')
+    if device_id is None:
+        return jsonify({'error': 'No device id'}), 400
+
+    res = most_recent_interaction_by_id(device_id)
+
+    return jsonify(res), 200

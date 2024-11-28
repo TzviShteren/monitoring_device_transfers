@@ -56,3 +56,18 @@ def check_direct_connection_by_id(device_id_1, device_id_2):
         res = session.run(query, params).single()
 
         return res
+
+
+def most_recent_interaction_by_id(device_id):
+    with driver.session() as session:
+        query = """
+            MATCH (d:Device)-[r:INTERACTS_WITH]->(:Device)
+            WHERE d.device_id = $device_id
+            RETURN r
+            ORDER BY r.timestamp DESC
+        """
+        params = {
+            "device_id": device_id,
+        }
+        res = session.run(query, params).data()
+        return res
