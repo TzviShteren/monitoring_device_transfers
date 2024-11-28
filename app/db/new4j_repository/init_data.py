@@ -1,8 +1,3 @@
-from returns.maybe import Maybe
-import toolz as t
-from operator import itemgetter
-from datetime import datetime, timedelta
-import uuid
 from app.db.database import driver
 from app.db.model import Location, Device, Interacts
 

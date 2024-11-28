@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from app.service.set_data import normalization_to_new4j_one_session, normalization_to_new4j
+from app.service.set_data import normalization_to_new4j_one_session
 phone_blueprint = Blueprint('phone_tracker', __name__)
 
 

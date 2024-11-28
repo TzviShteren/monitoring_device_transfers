@@ -52,5 +52,4 @@ def most_recent_interaction():
         return jsonify({'error': 'No device id'}), 400
 
     res = most_recent_interaction_by_id(device_id)
-
     return jsonify(res), 200

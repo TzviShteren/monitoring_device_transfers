@@ -1,15 +1,15 @@
-from returns.maybe import Maybe
-import toolz as t
-from operator import itemgetter
 from app.db.database import driver
 
 
 def calls_with_bluetooth():
     with driver.session() as session:
         query = """
-            MATCH (d1:Device)-[r:INTERACTS_WITH]->(d2:Device)
-            WHERE r.method = 'Bluetooth'
-            RETURN d1, d2
+            MATCH p=(d1:Device)-[:INTERACTS_WITH*]->(d2:Device)
+            WHERE ALL(r IN relationships(p) 
+            WHERE r.method = 'Bluetooth')
+            RETURN nodes(p) AS devices, length(p) AS path_length
+            ORDER BY path_length DESC
+            LIMIT 1
         """
         res = session.run(query).data()
         return res
@@ -61,13 +61,14 @@ def check_direct_connection_by_id(device_id_1, device_id_2):
 def most_recent_interaction_by_id(device_id):
     with driver.session() as session:
         query = """
-            MATCH (d:Device)-[r:INTERACTS_WITH]->(:Device)
+            MATCH (d:Device)-[r:INTERACTS_WITH]->(d1:Device)
             WHERE d.device_id = $device_id
-            RETURN r
+            RETURN r, d, d1
             ORDER BY r.timestamp DESC
         """
         params = {
-            "device_id": device_id,
+            "device_id": device_id
         }
         res = session.run(query, params).data()
+        print(res)
         return res
