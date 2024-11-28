@@ -1,5 +1,4 @@
-from app.db.new4j_repository.init_data import *
-from app.db.new4j_repository.device_repository import set_device_location
+from app.db.new4j_repository.init_data import device_exist, create_interaction_details, create_device
 
 
 def normalization_to_new4j(data):

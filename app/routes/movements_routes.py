@@ -1,40 +1,46 @@
 from flask import Blueprint, jsonify, request
+from app.db.new4j_repository.connected_repository import *
 
-movements_blueprint = Blueprint('movements', __name__)
-
-
-# {
-#     "device_id": "D12345",
-#     "owner_id": "314894775",
-#     "timestamp": "2023-10-15T14:30:00Z",
-#     "location": {
-#     "location_id": "L67890",
-#     },
-#     "movement_type": "vehicle",
-#     "confidence_level": 0.95
-# }
-@movements_blueprint.route('/', methods=['POST'])
-def create_movement():
-    data = request.get_json()
-    if not all(
-            x in data for x in ('device_id', 'owner_id', 'timestamp', 'location', 'movement_type', 'confidence_level')):
-        return jsonify({"error": "Missing required fields"}), 400
+connected_blueprint = Blueprint('connected', __name__)
 
 
-@movements_blueprint.route('/<movements>', methods=['GET'])
-def get_movements(movements):
-    try:
-        pass
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+@connected_blueprint.route('/bluetooth-connections', methods=['GET'])
+def get_bluetooth_connections():
+    res = calls_with_bluetooth()
+    return jsonify(res), 200
 
 
-@movements_blueprint.route('/search', methods=['GET'])
-def search_movements():
-    pass
+@connected_blueprint.route('/bluetooth_signal_strength_stronger_than_60', methods=['GET'])
+def signal_strength_dbm_stronger_than_60():
+    res = signal_strength_stronger_than_60()
+    return jsonify(res), 200
 
 
-@movements_blueprint.route('/<device_id>/history', methods=['GET'])
-def history_movements():
-    pass
+@connected_blueprint.route('/how_many_called_the_device', methods=['GET'])
+def how_many_called_the_device():
+    device_id = request.args.get('device_id')
+
+    if device_id is None:
+        return jsonify({'error': 'No device id'}), 400
+
+    res = ()
+
+    return jsonify(res), 200
+
+
+@connected_blueprint.route('/device_direct_connection', methods=['GET'])
+def check_direct_connection():
+    device_id_1 = request.args.get('device_id_1')
+    device_id_2 = request.args.get('device_id_2')
+
+    if not device_id_1 or not device_id_2:
+        return jsonify({"error": "Both device_id_1 and device_id_2 are required"}), 400
+
+    is_connected = check_direct_connection_by_id(device_id_1, device_id_2)
+
+    return jsonify({
+        "device_id_1": device_id_1,
+        "device_id_2": device_id_2,
+        "direct_connection": is_connected
+    }), 200
+
