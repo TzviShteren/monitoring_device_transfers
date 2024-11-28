@@ -7,7 +7,9 @@ def normalization_to_new4j(data):
         devices = interaction["devices"]
         interaction_details = interaction["interaction"]
         for device in devices:
-            if device_exist(device):
-                set_device_location(device)
-            create_device(device)
-        create_interaction_details(interaction_details)
+            if not device_exist(device["id"]):
+                create_device(device)
+                print(f"new device {device} created")
+        if device_exist(devices[0]["id"]) and device_exist(devices[1]["id"]):
+            create_interaction_details(interaction_details)
+            print(f"new interaction {interaction_details} created")

@@ -1,9 +1,7 @@
 from returns.maybe import Maybe
 import toolz as t
 from operator import itemgetter
-from datetime import datetime, timedelta
 from app.db.database import driver
-from app.db.model.cinema import Cinema
 
 
 def pip_return(res, node: str):
